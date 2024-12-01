@@ -1,0 +1,18 @@
+{
+    "notif_title" : "Poster",
+    "notif_cantplace": "Cannot place poster here - need a surface to attach to",
+    "open_poster": "Open Poster",
+    "delete_poster": "Delete Poster",
+
+    "input_title" : "Poster Flyers",
+    "input_label" : "Poster URL",
+    "progress_label" : "Placing Poster",
+
+    "prompt_updown" : "Move Up/Down",
+    "prompt_leftright" : "Move Left/Right",
+    "prompt_forwback" : "Move Front/Back",
+    "prompt_rotateupdown" : "Rotate Up/Down",
+    "prompt_rotatelr" : "Rotate Left/Right",
+    "prompt_place" : "Place Object",
+    "prompt_cancel" : "Cancel"
+}

@@ -1,0 +1,1 @@
+paper    = { name = "paper", label = "paper", weight = 0, type = "item", image = 'paper.png', unique = true, useable = true, shouldClose = true, description = nil }
