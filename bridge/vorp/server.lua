@@ -18,7 +18,7 @@ function CreateItem(itemName)
         if not source then return false end
         
         exports.vorp_inventory:closeInventory(source)
-        TriggerClientEvent("bangdai-poster:client:usePaper", source, data.name)
+        TriggerClientEvent("bangdai-poster:client:usePaper", source, data.item.item)
         return true
     end)
     return true

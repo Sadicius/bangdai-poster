@@ -2,7 +2,7 @@ local ActivePoster = {}
 
 local function InitDatabase()
     local success, error = pcall(function()
-        exports.oxmysql:execute([[
+        MySQL.query.await([[
             CREATE TABLE IF NOT EXISTS bangdai_posters (
                 id VARCHAR(50) PRIMARY KEY,
                 location JSON NOT NULL,
@@ -11,17 +11,15 @@ local function InitDatabase()
                 item VARCHAR(100) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ]], {}, function(success)
-            if success then
-                lib.print.info('^2Database table checked/created successfully^0')
-            end
-        end)
+        ]])
     end)
     
     if not success then
         lib.print.error('^1Failed to initialize database:^0', error)
         return false
     end
+
+    lib.print.info('^2Database table checked/created successfully^0')
     return true
 end
 
@@ -29,7 +27,7 @@ local function LoadAllPostersFromDatabase()
     if not next(ActivePoster) then ActivePoster = {} end
     
     local success, result = pcall(function()
-        return exports.oxmysql:executeSync('SELECT * FROM bangdai_posters')
+        return MySQL.query.await('SELECT * FROM bangdai_posters')
     end)
 
     if not success then
@@ -82,7 +80,7 @@ local function SavePosterToDatabase(data)
         z = data.rotation.z
     }
 
-    local success = exports.oxmysql:insert_async('INSERT INTO bangdai_posters (id, location, rotation, url, item) VALUES (?, ?, ?, ?, ?)', {
+    local success = MySQL.insert.await('INSERT INTO bangdai_posters (id, location, rotation, url, item) VALUES (?, ?, ?, ?, ?)', {
         data.id,
         json.encode(location),
         json.encode(rotation),
@@ -93,7 +91,7 @@ local function SavePosterToDatabase(data)
 end
 
 local function RemovePosterFromDatabase(id)
-    return exports.oxmysql:execute_async('DELETE FROM bangdai_posters WHERE id = ?', {id})
+    return MySQL.query.await('DELETE FROM bangdai_posters WHERE id = ?', {id})
 end
 
 local function searchActivePosterById(id)
