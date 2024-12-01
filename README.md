@@ -7,6 +7,6 @@
 
 **Dependencies :**
 - ox_lib
-- ox_target (additional) available prompt if you dont want target just set value Config.Usetarget = false
+- ox_target (additional) available prompt if you dont want target just set Config.Usetarget = false
 
 PREVIEW : [Youtube](https://www.youtube.com/watch?v=NseqbFav9RA)
