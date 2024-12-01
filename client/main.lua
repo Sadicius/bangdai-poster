@@ -526,7 +526,7 @@ RegisterNetEvent('bangdai-poster:client:usePaper', function (item)
     })
     if not input then return end
     local flyers = input[1]
-    if flyers then
+    if flyers ~= '' then
         TriggerServerEvent('bangdai-poster:server:SavePoster', flyers, item)
     end
 end)
