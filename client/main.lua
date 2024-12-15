@@ -593,7 +593,7 @@ RegisterNetEvent('bangdai-poster:client:createProp', function(data)
             self.object = nil
 
             if Config.UseTarget then
-                exports.ox_target:removeLocalEntity(self.ped, self.advanced and 'bangdai_poster_open' or 'bangdai_poster_delete')
+                exports.ox_target:removeLocalEntity(self.object, self.advanced and 'bangdai_poster_open' or 'bangdai_poster_delete')
             end
         end
     end
