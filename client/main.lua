@@ -314,6 +314,9 @@ function PlaceObject()
         
         DeletePreviewObject()
 
+        local animDict = "amb_work@world_human_hammer@wall@male_a@stand_exit"
+        local animName = "exit_front"
+
         goToCoords(cache.ped, loksi, false, 1.0)
         if lib.progressCircle({
                 duration = 5000,
@@ -327,7 +330,9 @@ function PlaceObject()
                     combat = true
                 },
                 anim = {
-                    scenario = 'WORLD_HUMAN_SLEDGEHAMMER',
+                    dict = animDict,
+                    clip = animName,
+                    flag = 0
                 },
             }) then
             TriggerServerEvent('bangdai-poster:server:syncobject', {
@@ -335,7 +340,8 @@ function PlaceObject()
                 data = savedInfo,
                 rotation = finalRotation
             })
-            ClearPedTasksImmediately(cache.ped)
+            RemoveAnimDict(animDict)
+            ClearPedTasks(cache.ped)
             savedInfo = nil
         end
     else
