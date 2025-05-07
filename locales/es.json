@@ -1,0 +1,18 @@
+{
+    "notif_title" : "Afiche",
+    "notif_cantplace": "No se puede colocar el afiche aquí; se necesita una superficie para colocarlo",
+    "open_poster": "Abrir afiche",
+    "delete_poster": "Eliminar afiche",
+    
+    "input_title" : "Folletos de afiches",
+    "input_label" : "URL del afiche",
+    "progress_label" : "Colocando afiche",
+    
+    "prompt_updown" : "Mover hacia arriba/abajo",
+    "prompt_leftright" : "Mover hacia la izquierda/derecha",
+    "prompt_forwback" : "Mover hacia adelante/atrás",
+    "prompt_rotateupdown" : "Girar hacia arriba/abajo",
+    "prompt_rotatelr" : "Girar hacia la izquierda/derecha",
+    "prompt_place" : "Colocar objeto",
+    "prompt_cancel" : "Cancelar"
+}

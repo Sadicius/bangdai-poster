@@ -1,6 +1,8 @@
 import { fetchNui } from './fetchNui.js';
 
 export class Poster {
+    
+
     constructor() {
         this.container = document.querySelector('.poster-container');
         this.image = document.querySelector('.poster-image');

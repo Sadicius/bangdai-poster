@@ -2,7 +2,7 @@ local ActivePoster = {}
 
 local function InitDatabase()
     local success, error = pcall(function()
-        MySQL.query.await([[
+        exports.oxmysql:execute([[
             CREATE TABLE IF NOT EXISTS bangdai_posters (
                 id VARCHAR(50) PRIMARY KEY,
                 location JSON NOT NULL,
@@ -11,26 +11,28 @@ local function InitDatabase()
                 item VARCHAR(100) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        ]])
+        ]], {}, function(success)
+            if success then
+                lib.print.info('^2Database table checked/created successfully^0')
+            end
+        end)
     end)
-    
+
     if not success then
         lib.print.error('^1Failed to initialize database:^0', error)
         return false
     end
-
-    lib.print.info('^2Database table checked/created successfully^0')
     return true
 end
 
 local function LoadAllPostersFromDatabase()
     if not next(ActivePoster) then ActivePoster = {} end
-    
-    local success, result = pcall(function()
-        return MySQL.query.await('SELECT * FROM bangdai_posters')
+
+    local scs, result = pcall(function()
+        return exports.oxmysql:executeSync('SELECT * FROM bangdai_posters')
     end)
 
-    if not success then
+    if not scs then
         lib.print.info('^1Failed to load posters from database^0')
         return false
     end
@@ -41,11 +43,11 @@ local function LoadAllPostersFromDatabase()
     end
 
     lib.print.info('^2Loading ^3' .. #result .. '^2 posters from database^0')
-    
+
     for _, posterData in ipairs(result) do
         local success, coords = pcall(json.decode, posterData.location)
         local success2, rotation = pcall(json.decode, posterData.rotation)
-        
+
         if success and success2 then
             local data = {
                 id = posterData.id,
@@ -62,7 +64,7 @@ local function LoadAllPostersFromDatabase()
             lib.print.info('^1Failed to decode poster data for ID:^3', posterData.id, '^0')
         end
     end
-    
+
     return true
 end
 
@@ -71,7 +73,7 @@ local function SavePosterToDatabase(data)
         x = data.coords.x,
         y = data.coords.y,
         z = data.coords.z,
-        w = data.coords.w 
+        w = data.coords.w
     }
     
     local rotation = {
@@ -80,7 +82,7 @@ local function SavePosterToDatabase(data)
         z = data.rotation.z
     }
 
-    local success = MySQL.insert.await('INSERT INTO bangdai_posters (id, location, rotation, url, item) VALUES (?, ?, ?, ?, ?)', {
+    local success = exports.oxmysql:insert_async('INSERT INTO bangdai_posters (id, location, rotation, url, item) VALUES (?, ?, ?, ?, ?)', {
         data.id,
         json.encode(location),
         json.encode(rotation),
@@ -91,7 +93,7 @@ local function SavePosterToDatabase(data)
 end
 
 local function RemovePosterFromDatabase(id)
-    return MySQL.query.await('DELETE FROM bangdai_posters WHERE id = ?', {id})
+    return exports.oxmysql:execute_async('DELETE FROM bangdai_posters WHERE id = ?', {id})
 end
 
 local function searchActivePosterById(id)
@@ -119,7 +121,7 @@ RegisterNetEvent('bangdai-poster:server:syncobject', function(data)
     if not Player then return end
 
     data.id = lib.string.random('.......')
-    
+
     local formattedData = {
         id = data.id,
         coords = data.coords,
@@ -131,7 +133,7 @@ RegisterNetEvent('bangdai-poster:server:syncobject', function(data)
     }
 
     ActivePoster[data.id] = formattedData
-    
+
     local success = SavePosterToDatabase(formattedData)
     if success then
         RemoveItem(src, data.data.item)
@@ -173,14 +175,14 @@ end
 local function CheckResourceName()
     local currentName = GetCurrentResourceName()
     local expectedName = 'bangdai-poster'
-    
+
     if currentName ~= expectedName then
         print('^1===========================================^0')
         print('^1[ERROR] Resource name must be: ^3' .. expectedName .. '^0')
         print('^1Current resource name: ^3' .. currentName .. '^0')
         print('^1Please rename your resource folder to: ^3' .. expectedName .. '^0')
         print('^1===========================================^0')
-        
+
         Wait(100)
         StopResource(currentName)
         return false
@@ -190,13 +192,13 @@ end
 
 AddEventHandler('onResourceStart', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
-    
+
     if not CheckResourceName() then return end
-    
+
     lib.print.info("^2Resource started successfully!^0")
-    
+
     if InitDatabase() then
-        Wait(1000) 
+        Wait(1000)
         LoadAllPostersFromDatabase()
     else
         lib.print.error('^1Failed to initialize database, stopping resource^0')

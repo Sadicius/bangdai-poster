@@ -1,6 +1,6 @@
 return {
 
-    UseTarget = false,
+    UseTarget = true,
 
     Prompt = {
         up_down = { `INPUT_GAME_MENU_UP`, `INPUT_GAME_MENU_DOWN` },

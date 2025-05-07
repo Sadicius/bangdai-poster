@@ -221,13 +221,13 @@ function PlaceObject()
 
     local coords = GetEntityCoords(previewObject)
     local forward = GetEntityForwardVector(previewObject)
-    
+
     local checkPoints = {
         {z = 0},       -- Center
         {z = 0.2},     -- Top
         {z = -0.2},    -- Bottom
     }
-    
+
     local bestHit = nil
     local bestEndCoords = nil
     local bestNormal = nil
@@ -314,36 +314,49 @@ function PlaceObject()
         
         DeletePreviewObject()
 
-        local animDict = "amb_work@world_human_hammer@wall@male_a@stand_exit"
-        local animName = "exit_front"
-
         goToCoords(cache.ped, loksi, false, 1.0)
-        if lib.progressCircle({
-                duration = 5000,
-                label = locale('progress_label'),
-                position = 'bottom',
-                useWhileDead = false,
-                canCancel = false,
-                disable = {
-                    car = true,
-                    move = true,
-                    combat = true
-                },
-                anim = {
-                    dict = animDict,
-                    clip = animName,
-                    flag = 0
-                },
-            }) then
-            TriggerServerEvent('bangdai-poster:server:syncobject', {
-                coords = loksi,
-                data = savedInfo,
-                rotation = finalRotation
-            })
-            RemoveAnimDict(animDict)
-            ClearPedTasks(cache.ped)
-            savedInfo = nil
+        
+        -- Animation setup
+        local dict = "amb_work@world_human_hammer@wall@male_a@trans"
+        local anim = "base_trans_base"
+        
+        RequestAnimDict(dict)
+        while not HasAnimDictLoaded(dict) do
+            Citizen.Wait(100)
         end
+        
+        -- Create and attach hammer prop
+        local hammer = CreateObject(`p_hammer01x`, GetEntityCoords(cache.ped), true, true, true)
+        AttachEntityToEntity(hammer, cache.ped, GetEntityBoneIndexByName(cache.ped, "PH_R_Hand"), 0.02, 0.04, -0.06, 180.0, 180.0, 0.0, true, true, false, true, 1, true)
+        
+        lib.progressCircle({
+            duration = 8000,
+            label = locale('progress_label'),
+            position = 'bottom',
+            useWhileDead = false,
+            canCancel = false,
+            disable = {
+                car = true,
+                move = true,
+                combat = true
+            },
+            anim = {
+                dict = dict,
+                clip = anim,
+                flag = 1
+            },
+        })
+
+        -- Clean up after animation
+        DeleteObject(hammer)
+        ClearPedTasksImmediately(cache.ped)
+
+        TriggerServerEvent('bangdai-poster:server:syncobject', {
+            coords = loksi,
+            data = savedInfo,
+            rotation = finalRotation
+        })
+        savedInfo = nil
     else
         if canNotify then
             Notify(locale('notif_title'), locale('notif_cantplace'), 'error', 5000)
@@ -367,9 +380,9 @@ end
 
 local function rotateObject(direction)
     if not previewObject then return end
-    
+
     local rotationSpeed = 5.0
-    
+
     if direction == "left" or direction == "right" then
         if direction == "left" then
             objectRotation.yaw = objectRotation.yaw + rotationSpeed
@@ -384,7 +397,7 @@ local function rotateObject(direction)
         end
 
         SetEntityRotation(previewObject, objectRotation.pitch, objectRotation.roll, objectRotation.yaw, 2, true)
-            
+
     elseif direction == "up" or direction == "down" then
         local newPitch = objectRotation.pitch
         if direction == "up" then
@@ -392,7 +405,7 @@ local function rotateObject(direction)
         else
             newPitch = newPitch - rotationSpeed
         end
-        
+
         objectRotation.pitch = clampRotation(newPitch, -85.0, 85.0)
 
         SetEntityRotation(previewObject, objectRotation.pitch,objectRotation.roll,objectRotation.yaw, 2, true)
@@ -407,7 +420,7 @@ local function movingObject(direction)
 
     local newCoords = coords
     local moveDir = vec3(0, 0, 0)
-    
+
     if direction == "up" then
         moveDir = vec3(0, 0, moveSpeed)
     elseif direction == "down" then
@@ -447,7 +460,7 @@ local function movingObject(direction)
             coords.y + point.y,
             coords.z + point.z
         )
-        
+
         local rayEnd = vec3(
             rayStart.x + (moveDir.x * 0.3),
             rayStart.y + (moveDir.y * 0.3),
@@ -461,7 +474,7 @@ local function movingObject(direction)
             previewObject,
             7
         )
-        
+
         local _, hit, hitCoords = GetShapeTestResult(ray)
         if hit == 1 then
             local hitDist = #(rayStart - hitCoords)
@@ -537,22 +550,22 @@ RegisterNetEvent('bangdai-poster:client:usePaper', function (item)
     end
 end)
 
-RegisterNetEvent('bangdai-poster:client:createProp', function(data)
+RegisterNetEvent('bangdai-poster:client:createProp', function(result)
     if source == '' then return end
-    if not data or type(data) ~= 'table' then return end
-    if not data.id or not data.coords or not data.data then return end
+    if not result or type(result) ~= 'table' then return end
+    if not result.id or not result.coords or not result.data then return end
 
     local points = lib.points.new({
-        coords = vec3(data.coords.x, data.coords.y, data.coords.z),
-        heading = data.coords.w,
+        coords = vec3(result.coords.x, result.coords.y, result.coords.z),
+        heading = result.coords.w,
         distance = 10.0,
-        id = data.id,
+        id = result.id,
         target = {{
             name = 'bangdai_poster_open',
             icon = 'fas fa-clipboard-user',
             label = locale('open_poster'),
             onSelect = function ()
-                return OpenPosterNui(data.data.url)
+                return OpenPosterNui(result.data.url)
             end,
             canInteract = function(_, distance)
                 return distance < 2.0
@@ -562,7 +575,7 @@ RegisterNetEvent('bangdai-poster:client:createProp', function(data)
             icon = 'fas fa-trash-can',
             label = locale('delete_poster'),
             onSelect = function ()
-                return TriggerServerEvent('bangdai-poster:server:removeProp', data)
+                return TriggerServerEvent('bangdai-poster:server:removeProp', result)
             end,
             canInteract = function(_, distance)
                 return distance < 2.0
@@ -576,8 +589,8 @@ RegisterNetEvent('bangdai-poster:client:createProp', function(data)
             lib.requestModel(model, 120000)
             self.object = CreateObject(model, self.coords.x, self.coords.y, self.coords.z, false, false, false)
 
-            if data.rotation then
-                SetEntityRotation(self.object, data.rotation.x, data.rotation.y, data.rotation.z, 2, true)
+            if result.rotation then
+                SetEntityRotation(self.object, result.rotation.x, result.rotation.y, result.rotation.z, 2, true)
             else
                 SetEntityHeading(self.object, self.heading)
             end
@@ -585,7 +598,7 @@ RegisterNetEvent('bangdai-poster:client:createProp', function(data)
             FreezeEntityPosition(self.object, true)
 
             SetModelAsNoLongerNeeded(model)
-            
+
             if Config.UseTarget then
                 exports.ox_target:addLocalEntity(self.object, self.target)
             end
@@ -599,7 +612,7 @@ RegisterNetEvent('bangdai-poster:client:createProp', function(data)
             self.object = nil
 
             if Config.UseTarget then
-                exports.ox_target:removeLocalEntity(self.object, self.advanced and 'bangdai_poster_open' or 'bangdai_poster_delete')
+                exports.ox_target:removeLocalEntity(self.ped, self.advanced and 'bangdai_poster_open' or 'bangdai_poster_delete')
             end
         end
     end
@@ -611,18 +624,18 @@ RegisterNetEvent('bangdai-poster:client:createProp', function(data)
                 local label = CreateVarString(10, 'LITERAL_STRING', locale('notif_title'))
                 PromptSetActiveGroupThisFrame(Prompt, label)
                 if IsControlJustPressed(0, Config.Prompt.openposter) then
-                    OpenPosterNui(data.data.url)
+                    OpenPosterNui(result.data.url)
                     return
                 end
                 if IsControlJustPressed(0, Config.Prompt.deleteposter) then
-                    TriggerServerEvent('bangdai-poster:server:removeProp', data)
+                    TriggerServerEvent('bangdai-poster:server:removeProp', result)
                     return
                 end
             end
         end
     end
 
-    spawnedObjects[data.id] = points
+    spawnedObjects[result.id] = points
 end)
 
 RegisterNetEvent('bangdai-poster:client:spawnobject', function(data)
@@ -634,7 +647,7 @@ end)
 RegisterNetEvent('bangdai-poster:client:removeProp', function(data)
     if source == '' then return end
     if not data or not data.id then return end
-    
+
     local points = spawnedObjects[data.id]
     if points then
         if points.object and DoesEntityExist(points.object) then
@@ -669,7 +682,7 @@ end)
 
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
-    
+
     if openNui then
         SendNUIMessage({
             action = "close"
@@ -677,7 +690,7 @@ AddEventHandler('onResourceStop', function(resourceName)
         SetNuiFocus(false, false)
         openNui = false
     end
-    
+
     for id, points in pairs(spawnedObjects) do
         if points.object and DoesEntityExist(points.object) then
             DeleteEntity(points.object)
@@ -692,7 +705,7 @@ AddEventHandler('onResourceStop', function(resourceName)
         points:remove()
         spawnedObjects[id] = nil
     end
-    
+
     if previewObject and DoesEntityExist(previewObject) then
         DeleteEntity(previewObject)
     end
